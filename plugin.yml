@@ -1,0 +1,27 @@
+name: Auction
+main: com.github.grandmarket.auction.Auction
+version: 0.0.1
+
+commands:
+  auction:
+    description: Contains commands related to auctions
+    usage: /<command> [options]
+    permission: Auction.mainAuction
+    permission-message: You don't have <permission>
+
+permissions:
+  Auction.*
+    description: Gives access to all auction commands
+    children:
+      auction.mainAuction: true
+  Auction.mainAuction:
+    description: Allows you to use the /auction command
+    default: true
+  Auction.create:
+    description: Allows you to create auctions
+    default: op
+  Auction.run:
+    description: Allows you to manage a currently running auction
+    default: op
+  Auction.bid:
+    description: Allows you to bid in an auction

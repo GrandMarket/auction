@@ -73,7 +73,9 @@ public class Auction extends JavaPlugin {
 				}
 			}
 			else if(args[1] == "help" || args[1] == "?") {
-				return false;
+				sender.sendMessage("Usage:");
+				sender.sendMessage("/auction create <auction name> [auction owner]");
+				sender.sendMessage("/auction setspawn <auction name>");
 			}
 		}
 		return false;

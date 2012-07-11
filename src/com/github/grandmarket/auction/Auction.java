@@ -89,6 +89,10 @@ public class Auction extends JavaPlugin {
 					sender.sendMessage("Usage: /"+commandLabel+" start <auction>");
 					return true;
 				}
+				if(!sender.hasPermission("Auction.startAny") && getConfig().getString("auction"+args[2]+".owner") != sender.getName()) {
+					sender.sendMessage("You don't have permission to start that auction");
+					return true;
+				}
 				if(getConfig().contains("auction."+args[2]+".running")) {
 					sender.sendMessage("The specified auction is already running.");
 					sender.sendMessage("Use /"+commandLabel+" run [options] to control the auction.");
@@ -105,6 +109,71 @@ public class Auction extends JavaPlugin {
 				sender.sendMessage(GRAY+"Auction started.");
 				return true;
 			}
+			else if(args[1] == "run") {
+				if(!sender.hasPermission("Auction.run")) {
+					sender.sendMessage("You don't have permission to run this auction");
+					return true;
+				}
+				if(args.length < 2) {
+					sender.sendMessage("Usage:");
+					String[] usageInformation = {"setbid <price> [auction]", "close [auction]"};
+					for(String line : usageInformation) {
+						sender.sendMessage("/"+commandLabel+" run "+line);
+					}
+					return true;
+				}
+				if(args[2] == "setbid") {
+					if(args.length < 3) {
+						sender.sendMessage("No price selected: /"+commandLabel+" run <price> [auction]");
+					}
+					String bid = args[3];
+					String auction;
+					if(args.length > 3) {
+						auction = args[4];
+						sender.sendMessage("Auction " + auction + " saved as default, so you don't need to define [auction]");
+						saveAuction(sender, auction);
+					}
+					else {
+						if(lastAuctionSet(sender)) {
+							auction = lastAuction(sender);
+						}
+						else {
+							sender.sendMessage("No default auction, please define an auction.");
+							return true;
+						}
+					}
+					if(!sender.hasPermission("Auction.runAny") && getConfig().getString("auctions."+auction+".owner") != sender.getName()) {
+						sender.sendMessage("You don't have permission to control that auction.");
+						return true;
+					}
+					getConfig().set("auctions."+auction+".nextbid", bid);
+					sender.sendMessage("Set the bid price to "+bid);
+					return true;
+				}
+				if(args[2] == "close") {
+					String auction;
+					if(args.length > 2) {
+						auction = args[3];
+						sender.sendMessage("Auction " + auction + " saved as default, so you don't need to define [auction]");
+						saveAuction(sender, auction);
+					}
+					else {
+						if(lastAuctionSet(sender)) {
+							auction = lastAuction(sender);
+						}
+						else {
+							sender.sendMessage("No default auction, please define an auction.");
+							return true;
+						}
+					}
+					if(!sender.hasPermission("Auction.runAny") && getConfig().getString("auctions."+auction+".owner") != sender.getName()) {
+						sender.sendMessage("You don't have permission to control that auction.");
+						return true;
+					}
+					getConfig().set("auction."+auction+"running", null);
+					sender.sendMessage(GRAY+"Auction stopped.");
+				}
+			}
 			else if(args[1] == "help" || args[1] == "?") {
 				sender.sendMessage("Usage:");
 				sender.sendMessage("/auction create <auction name> [auction owner]");
@@ -112,6 +181,15 @@ public class Auction extends JavaPlugin {
 				return true;
 			}
 		}
+		else if(cmd.getName().equalsIgnoreCase("bidder")) {
+			if(args.length < 2) {
+				sender.sendMessage("Usage:");
+				sender.sendMessage("/"+commandLabel+" join <auction>");
+				sender.sendMessage("/"+commandLabel+" leave <auction>");
+				sender.sendMessage(GRAY+"More bidding commands at /bid, after you join an auction.");
+			}
+		}
+		
 		return false;
 	}
 	public boolean initEconomy() {
@@ -121,5 +199,14 @@ public class Auction extends JavaPlugin {
 		}
 
 		return (economy != null);
+	}
+	public Boolean lastAuctionSet(CommandSender player) {
+		return getConfig().contains("lastAuction."+player.getName());
+	}
+	public String lastAuction(CommandSender player) {
+		return getConfig().getString("lastAuction."+player.getName());
+	}
+	public void saveAuction(CommandSender sender, String auction) {
+		getConfig().set("lastAuction."+sender.getName(), auction);
 	}
 }

@@ -2,6 +2,8 @@ name: Auction
 main: com.github.grandmarket.auction.Auction
 version: 0.0.1
 
+depend: [Vault]
+
 commands:
   auction:
     description: Contains commands related to auctions

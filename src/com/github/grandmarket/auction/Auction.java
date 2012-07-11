@@ -3,13 +3,21 @@ package com.github.grandmarket.auction;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import static org.bukkit.ChatColor.*;
 
+import net.milkbowl.vault.economy.Economy;
+
 public class Auction extends JavaPlugin {
+	private Economy economy;
 	public void onEnable() {
+		initEconomy();
 		getLogger().info("Auction plugin has been enabled");
+		if(!getConfig().contains("runprice")) {
+			getConfig().set("runprice", 0);
+		}
 	}
 	public void onDisable() {
 		getLogger().info("Auction plugin has been disabled");
@@ -72,12 +80,46 @@ public class Auction extends JavaPlugin {
 					return true;
 				}
 			}
+			else if(args[1] == "start") {
+				if(!sender.hasPermission("Auction.run")) {
+					sender.sendMessage("You don't have permission to start an auction.");
+					return true;
+				}
+				if(args.length < 2) {
+					sender.sendMessage("Usage: /"+commandLabel+" start <auction>");
+					return true;
+				}
+				if(getConfig().contains("auction."+args[2]+".running")) {
+					sender.sendMessage("The specified auction is already running.");
+					sender.sendMessage("Use /"+commandLabel+" run [options] to control the auction.");
+					return true;
+				}
+				if(getConfig().getDouble("auction.runprice") > 0 && !economy.has(sender.getName(), getConfig().getDouble("auction.runprice"))) {
+					sender.sendMessage("You don't have enough money to run an auction.");
+					return true;
+				}
+				if(getConfig().getDouble("auction.runprice") > 0) {
+					economy.withdrawPlayer(sender.getName(), getConfig().getDouble("auction.runprice"));
+				}
+				getConfig().set("auction."+args[2]+".running", true);
+				sender.sendMessage(GRAY+"Auction started.");
+				return true;
+			}
 			else if(args[1] == "help" || args[1] == "?") {
 				sender.sendMessage("Usage:");
 				sender.sendMessage("/auction create <auction name> [auction owner]");
 				sender.sendMessage("/auction setspawn <auction name>");
+				return true;
 			}
 		}
 		return false;
+	}
+	public boolean initEconomy() {
+		RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
+		if (economyProvider != null) {
+			economy = economyProvider.getProvider();
+		}
+
+		return (economy != null);
 	}
 }
